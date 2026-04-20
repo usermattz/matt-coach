@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon questionnaire nutrition — Matthias Gamon</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1f15;
+    --bg2: #111c17;
+    --bg3: #162310;
+    --border: rgba(255,255,255,0.09);
+    --accent: #4a7c59;
+    --accent-light: #7ec89a;
+    --gold: #c8a96e;
+    --text: #f0ede6;
+    --muted: rgba(240,237,230,0.5);
+    --muted2: rgba(240,237,230,0.28);
+    --error: #e07070;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 80% 0%, rgba(74,124,89,0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 10% 100%, rgba(200,169,110,0.07) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 16px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(13,31,21,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 17px; font-weight: 400; color: var(--text); letter-spacing: 0.04em;
+  }
+
+  .logo em { font-style: italic; color: var(--accent-light); }
+
+  .nav-back {
+    font-size: 11px; font-weight: 400; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); text-decoration: none;
+    display: flex; align-items: center; gap: 8px;
+    transition: color 0.2s;
+  }
+  .nav-back:hover { color: var(--accent-light); }
+
+  @media (max-width: 600px) { nav { padding: 14px 20px; } }
+
+  /* ── WRAPPER ── */
+  .page {
+    position: relative; z-index: 1;
+    max-width: 680px; margin: 0 auto;
+    padding: 110px 24px 80px;
+  }
+
+  /* ── PROGRESS ── */
+  .progress-wrap {
+    margin-bottom: 40px;
+    animation: fadeUp 0.5s ease both;
+  }
+
+  .progress-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .progress-label {
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .progress-count {
+    font-size: 11px; color: var(--muted2); letter-spacing: 0.06em;
+  }
+
+  .progress-track {
+    height: 2px; background: var(--border); border-radius: 2px; overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+    transition: width 0.4s ease;
+    border-radius: 2px;
+  }
+
+  /* ── STEP ── */
+  .step { display: none; }
+  .step.active {
+    display: block;
+    animation: fadeUp 0.4s ease both;
+  }
+
+  .step-tag {
+    font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .step-tag::after { content: ''; flex: 1; height: 1px; background: var(--border); max-width: 80px; }
+
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(26px, 5vw, 42px); font-weight: 300; line-height: 1.1;
+    margin-bottom: 8px;
+  }
+  .step-title em { font-style: italic; color: var(--accent-light); }
+
+  .step-sub {
+    font-size: 14px; color: var(--muted); line-height: 1.7; margin-bottom: 36px;
+  }
+
+  /* ── FIELDS ── */
+  .fields { display: flex; flex-direction: column; gap: 20px; }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 520px) { .field-row { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 7px; }
+
+  .field label {
+    font-size: 11px; font-weight: 500; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 300;
+    color: var(--text);
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    border-radius: 2px;
+  }
+
+  .field input:focus,
+  .field select:focus,
+  .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,124,89,0.12);
+  }
+
+  .field select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a7a6a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+  .field select option { background: #162310; }
+
+  .field textarea { resize: vertical; min-height: 90px; }
+
+  /* choix multiples */
+  .choices { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .choice-btn {
+    font-family: 'Jost', sans-serif;
+    font-size: 13px; font-weight: 400; letter-spacing: 0.04em;
+    color: var(--muted); background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 9px 18px; cursor: pointer;
+    transition: all 0.15s; border-radius: 2px;
+  }
+
+  .choice-btn:hover { border-color: var(--accent-light); color: var(--accent-light); }
+
+  .choice-btn.selected {
+    background: var(--accent); border-color: var(--accent);
+    color: #fff;
+  }
+
+  /* range slider */
+  .range-wrap { display: flex; flex-direction: column; gap: 8px; }
+
+  .range-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted2); }
+
+  input[type=range] {
+    width: 100%; appearance: none; height: 2px;
+    background: var(--border); outline: none; cursor: pointer;
+    border-radius: 2px;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; width: 18px; height: 18px;
+    border-radius: 50%; background: var(--accent-light);
+    border: 3px solid var(--bg); box-shadow: 0 0 0 1px var(--accent);
+  }
+
+  .range-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px; font-weight: 300; color: var(--accent-light);
+    text-align: center; letter-spacing: 0.02em;
+  }
+
+  /* error */
+  .field-error { font-size: 11px; color: var(--error); display: none; margin-top: -4px; }
+  .field.has-error input,
+  .field.has-error select,
+  .field.has-error textarea { border-color: var(--error); }
+  .field.has-error .field-error { display: block; }
+
+  /* ── NAVIGATION BUTTONS ── */
+  .nav-btns {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 40px; gap: 16px;
+  }
+
+  .btn-prev {
+    font-family: 'Jost', sans-serif; font-size: 11px; font-weight: 400;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); background: none; border: 1px solid var(--border);
+    padding: 13px 24px; cursor: pointer; transition: all 0.2s; border-radius: 2px;
+  }
+  .btn-prev:hover { border-color: var(--muted); color: var(--text); }
+
+  .btn-next {
+    font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--bg); background: var(--accent-light);
+    border: none; padding: 14px 36px; cursor: pointer;
+    transition: all 0.2s; flex: 1; max-width: 260px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    border-radius: 2px;
+  }
+  .btn-next:hover { background: #a8d9bc; transform: translateY(-1px); }
+  .btn-next:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── SUCCESS ── */
+  #success {
+    display: none; text-align: center;
+    animation: fadeUp 0.5s ease both;
+    padding: 60px 0;
+  }
+
+  .success-icon { font-size: 56px; margin-bottom: 20px; }
+
+  .success-h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px; font-weight: 300; margin-bottom: 12px;
+  }
+  .success-h2 em { font-style: italic; color: var(--accent-light); }
+
+  .success-sub { font-size: 15px; color: var(--muted); line-height: 1.7; margin-bottom: 36px; }
+
+  .success-btn {
+    font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--bg); background: var(--accent-light);
+    border: none; padding: 14px 32px; cursor: pointer; transition: all 0.2s;
+    text-decoration: none; display: inline-block; border-radius: 2px;
+  }
+  .success-btn:hover { background: #a8d9bc; }
+
+  /* ── ADMIN VIEW ── */
+  #admin-panel {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+    overflow-y: auto; padding: 40px 20px;
+  }
+
+  .admin-inner {
+    max-width: 800px; margin: 0 auto;
+    background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 4px; overflow: hidden;
+  }
+
+  .admin-header {
+    padding: 24px 28px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .admin-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 22px; font-weight: 400; font-style: italic;
+  }
+
+  .admin-close {
+    background: none; border: 1px solid var(--border);
+    color: var(--muted); font-size: 12px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 8px 16px; cursor: pointer;
+    transition: all 0.2s; border-radius: 2px;
+  }
+  .admin-close:hover { border-color: var(--error); color: var(--error); }
+
+  .admin-body { padding: 28px; }
+
+  .admin-login { text-align: center; padding: 40px 0; }
+  .admin-login p { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+
+  .admin-login input {
+    font-family: 'Jost', sans-serif; font-size: 14px;
+    background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); padding: 11px 16px; outline: none;
+    width: 100%; max-width: 280px; margin-bottom: 12px; display: block;
+    margin-left: auto; margin-right: auto; border-radius: 2px;
+  }
+
+  .admin-login input:focus { border-color: var(--accent); }
+
+  .admin-login button {
+    font-family: 'Jost', sans-serif; font-size: 12px; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--bg); background: var(--accent-light);
+    border: none; padding: 12px 28px; cursor: pointer; transition: background 0.2s;
+    border-radius: 2px;
+  }
+  .admin-login button:hover { background: #a8d9bc; }
+
+  .admin-error { font-size: 12px; color: var(--error); margin-top: 8px; }
+
+  .submissions { display: flex; flex-direction: column; gap: 16px; }
+
+  .submission-card {
+    border: 1px solid var(--border); border-radius: 4px; overflow: hidden;
+  }
+
+  .sub-header {
+    padding: 14px 18px; background: var(--bg3);
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .sub-name { font-size: 14px; font-weight: 500; }
+  .sub-date { font-size: 11px; color: var(--muted2); letter-spacing: 0.06em; }
+
+  .sub-body { padding: 18px; display: none; }
+  .sub-body.open { display: block; }
+
+  .sub-field { margin-bottom: 12px; }
+  .sub-field-label { font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); margin-bottom: 3px; }
+  .sub-field-value { font-size: 14px; color: var(--text); line-height: 1.6; }
+
+  .no-submissions { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+  /* admin trigger (hidden) */
+  .admin-trigger {
+    position: fixed; bottom: 20px; right: 20px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--muted2); font-size: 10px; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 8px 14px; cursor: pointer;
+    transition: all 0.2s; border-radius: 2px;
+  }
+  .admin-trigger:hover { background: rgba(255,255,255,0.09); color: var(--muted); }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Matthias <em>Gamon</em></div>
+  <a class="nav-back" href="https://usermattz.github.io/matt-coach/landing-page.html">← Retour</a>
+</nav>
+
+<div class="page">
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-top">
+      <div class="progress-label">Mon bilan nutrition</div>
+      <div class="progress-count" id="progressCount">Étape 1 / 6</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:16.6%"></div>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 1 — OBJECTIF ══ -->
+  <div class="step active" id="step-1">
+    <div class="step-tag">Étape 1</div>
+    <div class="step-title">Quel est votre<br><em>objectif</em> ?</div>
+    <div class="step-sub">Choisissez ce qui correspond le mieux à ce que vous recherchez.</div>
+    <div class="fields">
+      <div class="field" id="f-objectif">
+        <label>Objectif principal *</label>
+        <div class="choices" id="objectif-choices">
+          <button class="choice-btn" onclick="selectChoice('objectif','Perte de poids',this)">🔥 Perte de poids</button>
+          <button class="choice-btn" onclick="selectChoice('objectif','Prise de masse',this)">💪 Prise de masse</button>
+          <button class="choice-btn" onclick="selectChoice('objectif','Maintien du poids',this)">⚖️ Maintien du poids</button>
+          <button class="choice-btn" onclick="selectChoice('objectif','Rééquilibrage alimentaire',this)">🥗 Rééquilibrage</button>
+          <button class="choice-btn" onclick="selectChoice('objectif','Performance sportive',this)">🏅 Performance sportive</button>
+        </div>
+        <div class="field-error">Veuillez choisir un objectif.</div>
+      </div>
+      <div class="field" id="f-objectif-poids">
+        <label>Objectif de poids (kg)</label>
+        <input type="number" id="objectif-poids" placeholder="Ex : 70" min="30" max="200">
+      </div>
+    </div>
+    <div class="nav-btns">
+      <div></div>
+      <button class="btn-next" onclick="nextStep(1)">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 2 — PROFIL ══ -->
+  <div class="step" id="step-2">
+    <div class="step-tag">Étape 2</div>
+    <div class="step-title">Votre <em>profil</em></div>
+    <div class="step-sub">Ces informations me permettent d'adapter votre programme précisément à vous.</div>
+    <div class="fields">
+      <div class="field-row">
+        <div class="field" id="f-prenom">
+          <label>Prénom *</label>
+          <input type="text" id="prenom" placeholder="Marie">
+          <div class="field-error">Champ requis.</div>
+        </div>
+        <div class="field" id="f-email">
+          <label>Email *</label>
+          <input type="email" id="email" placeholder="marie@email.com">
+          <div class="field-error">Email invalide.</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" id="f-age">
+          <label>Âge *</label>
+          <input type="number" id="age" placeholder="28" min="10" max="100">
+          <div class="field-error">Champ requis.</div>
+        </div>
+        <div class="field" id="f-metier">
+          <label>Métier / Activité *</label>
+          <input type="text" id="metier" placeholder="Infirmière, développeur...">
+          <div class="field-error">Champ requis.</div>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field" id="f-poids">
+          <label>Poids actuel (kg) *</label>
+          <input type="number" id="poids" placeholder="75" min="30" max="300">
+          <div class="field-error">Champ requis.</div>
+        </div>
+        <div class="field" id="f-taille">
+          <label>Taille (cm) *</label>
+          <input type="number" id="taille" placeholder="170" min="100" max="250">
+          <div class="field-error">Champ requis.</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="prevStep(2)">← Retour</button>
+      <button class="btn-next" onclick="nextStep(2)">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 3 — ACTIVITÉ ══ -->
+  <div class="step" id="step-3">
+    <div class="step-tag">Étape 3</div>
+    <div class="step-title">Votre <em>activité</em><br>au quotidien</div>
+    <div class="step-sub">Votre niveau d'activité influence directement vos besoins caloriques.</div>
+    <div class="fields">
+
+      <div class="field" id="f-pas">
+        <label>Nombre de pas par jour (environ)</label>
+        <div class="range-wrap">
+          <div class="range-val" id="pas-val">5 000 pas</div>
+          <input type="range" id="pas" min="1000" max="20000" step="500" value="5000" oninput="updateRange('pas','pas-val', v => v.toLocaleString('fr')+' pas')">
+          <div class="range-labels"><span>Sédentaire</span><span>Très actif</span></div>
+        </div>
+      </div>
+
+      <div class="field" id="f-sport">
+        <label>Faites-vous du sport ? *</label>
+        <div class="choices" id="sport-choices">
+          <button class="choice-btn" onclick="selectChoice('sport','Non, pas de sport',this)">Pas de sport</button>
+          <button class="choice-btn" onclick="selectChoice('sport','Oui, 1 à 2 fois/semaine',this)">1–2 fois / semaine</button>
+          <button class="choice-btn" onclick="selectChoice('sport','Oui, 3 à 4 fois/semaine',this)">3–4 fois / semaine</button>
+          <button class="choice-btn" onclick="selectChoice('sport','Oui, 5 fois et plus/semaine',this)">5+ fois / semaine</button>
+        </div>
+        <div class="field-error">Veuillez sélectionner une option.</div>
+      </div>
+
+      <div class="field" id="f-type-sport">
+        <label>Quel(s) sport(s) pratiquez-vous ?</label>
+        <input type="text" id="type-sport" placeholder="Ex : musculation, running, MMA...">
+      </div>
+
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="prevStep(3)">← Retour</button>
+      <button class="btn-next" onclick="nextStep(3)">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 4 — ALIMENTATION ══ -->
+  <div class="step" id="step-4">
+    <div class="step-tag">Étape 4</div>
+    <div class="step-title">Vos <em>habitudes</em><br>alimentaires</div>
+    <div class="step-sub">Soyez honnête — c'est pour votre bien !</div>
+    <div class="fields">
+
+      <div class="field" id="f-repas-nb">
+        <label>Combien de repas faites-vous par jour ? *</label>
+        <div class="choices" id="repas-nb-choices">
+          <button class="choice-btn" onclick="selectChoice('repas-nb','1 repas',this)">1 repas</button>
+          <button class="choice-btn" onclick="selectChoice('repas-nb','2 repas',this)">2 repas</button>
+          <button class="choice-btn" onclick="selectChoice('repas-nb','3 repas',this)">3 repas</button>
+          <button class="choice-btn" onclick="selectChoice('repas-nb','4 repas et +',this)">4 et +</button>
+        </div>
+        <div class="field-error">Veuillez sélectionner une option.</div>
+      </div>
+
+      <div class="field" id="f-mange-bcp">
+        <label>Avez-vous tendance à beaucoup manger ? *</label>
+        <div class="choices" id="mange-bcp-choices">
+          <button class="choice-btn" onclick="selectChoice('mange-bcp','Non, je mange raisonnablement',this)">Non, raisonnablement</button>
+          <button class="choice-btn" onclick="selectChoice('mange-bcp','Oui, à tous les repas',this)">Oui, à tous les repas</button>
+          <button class="choice-btn" onclick="selectChoice('mange-bcp','Surtout le soir',this)">Surtout le soir</button>
+          <button class="choice-btn" onclick="selectChoice('mange-bcp','Surtout le midi',this)">Surtout le midi</button>
+          <button class="choice-btn" onclick="selectChoice('mange-bcp','Je grignote entre les repas',this)">Je grignote</button>
+        </div>
+        <div class="field-error">Veuillez sélectionner une option.</div>
+      </div>
+
+      <div class="field" id="f-habitudes">
+        <label>Décrivez vos habitudes alimentaires actuelles</label>
+        <textarea id="habitudes" placeholder="Ex : je saute souvent le petit-déjeuner, je mange beaucoup de pâtes, je mange rarement des légumes..."></textarea>
+      </div>
+
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="prevStep(4)">← Retour</button>
+      <button class="btn-next" onclick="nextStep(4)">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 5 — PLAISIRS & ALLERGIES ══ -->
+  <div class="step" id="step-5">
+    <div class="step-tag">Étape 5</div>
+    <div class="step-title">Plaisirs &<br><em>contraintes</em></div>
+    <div class="step-sub">Un bon programme intègre ce que vous aimez et respecte vos limites.</div>
+    <div class="fields">
+
+      <div class="field" id="f-aliment-plaisir">
+        <label>Vos aliments plaisir *</label>
+        <input type="text" id="aliment-plaisir" placeholder="Ex : chocolat, fromage, pain, pizza...">
+        <div class="field-error">Champ requis.</div>
+      </div>
+
+      <div class="field" id="f-repas-plaisir">
+        <label>Votre repas plaisir préféré *</label>
+        <input type="text" id="repas-plaisir" placeholder="Ex : raclette, burger, sushis...">
+        <div class="field-error">Champ requis.</div>
+      </div>
+
+      <div class="field" id="f-allergies">
+        <label>Allergies ou intolérances *</label>
+        <div class="choices" id="allergies-choices" style="flex-wrap:wrap">
+          <button class="choice-btn" onclick="toggleChoice('allergies','Aucune',this)">Aucune</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Gluten',this)">Gluten</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Lactose',this)">Lactose</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Œufs',this)">Œufs</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Fruits à coque',this)">Fruits à coque</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Poisson',this)">Poisson</button>
+          <button class="choice-btn" onclick="toggleChoice('allergies','Autre',this)">Autre</button>
+        </div>
+        <div class="field-error">Veuillez sélectionner au moins une option.</div>
+      </div>
+
+      <div class="field" id="f-allergies-autre">
+        <label>Précisez si "Autre"</label>
+        <input type="text" id="allergies-autre" placeholder="Précisez vos autres allergies...">
+      </div>
+
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="prevStep(5)">← Retour</button>
+      <button class="btn-next" onclick="nextStep(5)">Suivant →</button>
+    </div>
+  </div>
+
+  <!-- ══ ÉTAPE 6 — RECAP & ENVOI ══ -->
+  <div class="step" id="step-6">
+    <div class="step-tag">Étape 6</div>
+    <div class="step-title">Presque <em>terminé</em> !</div>
+    <div class="step-sub">Un dernier mot avant que j'analyse votre profil et prépare votre programme.</div>
+    <div class="fields">
+
+      <div class="field" id="f-motivation">
+        <label>Pourquoi maintenant ? Qu'est-ce qui vous a décidé ?</label>
+        <textarea id="motivation" placeholder="Ex : j'ai un mariage dans 3 mois, je me sens à bout de souffle, j'ai envie de me sentir mieux..."></textarea>
+      </div>
+
+      <div class="field" id="f-attente">
+        <label>Qu'attendez-vous de cet accompagnement ?</label>
+        <textarea id="attente" placeholder="Ex : un suivi strict, de la flexibilité, des conseils pratiques..."></textarea>
+      </div>
+
+      <div class="field" id="f-formule">
+        <label>Formule envisagée *</label>
+        <select id="formule">
+          <option value="">— Choisissez —</option>
+          <option value="1 mois (30€) — sans engagement">1 mois — 30€ (sans engagement)</option>
+          <option value="3 mois (80€/mois) — changement physique garanti">3 mois — 80€/mois (recommandé)</option>
+          <option value="Cut & Optimisation sports de combat (30€/mois)">Cut & Optimisation — 30€/mois</option>
+          <option value="Je ne sais pas encore">Je ne sais pas encore</option>
+        </select>
+        <div class="field-error">Veuillez choisir une formule.</div>
+      </div>
+
+    </div>
+    <div class="nav-btns">
+      <button class="btn-prev" onclick="prevStep(6)">← Retour</button>
+      <button class="btn-next" id="submitBtn" onclick="submitForm()">
+        <span id="submitLabel">Envoyer mon bilan ✓</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SUCCÈS ══ -->
+  <div id="success">
+    <div class="success-icon">🌱</div>
+    <div class="success-h2">Bilan <em>reçu</em> !</div>
+    <div class="success-sub">
+      Merci pour vos réponses. Matthias va analyser votre profil et vous contacter sous 24–48h pour vous proposer votre programme personnalisé.<br><br>
+      Vous pouvez aussi réserver un appel découverte si vous préférez en discuter directement.
+    </div>
+    <a class="success-btn" href="https://calendly.com/gamonmatt/new-meeting" target="_blank">Réserver un appel en plus →</a>
+  </div>
+
+</div><!-- /page -->
+
+<!-- ADMIN TRIGGER -->
+<button class="admin-trigger" onclick="openAdmin()">Admin ⚙</button>
+
+<!-- ══ ADMIN PANEL ══ -->
+<div id="admin-panel">
+  <div class="admin-inner">
+    <div class="admin-header">
+      <div class="admin-title">Réponses reçues</div>
+      <button class="admin-close" onclick="closeAdmin()">Fermer ✕</button>
+    </div>
+    <div class="admin-body">
+      <div id="admin-login-wrap" class="admin-login">
+        <p>Accès réservé à Matthias Gamon</p>
+        <input type="password" id="admin-pwd" placeholder="Mot de passe" onkeydown="if(event.key==='Enter')checkAdmin()">
+        <br>
+        <button onclick="checkAdmin()">Accéder →</button>
+        <div class="admin-error" id="admin-error"></div>
+      </div>
+      <div id="admin-content" style="display:none">
+        <div class="submissions" id="submissions-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  const ADMIN_PASSWORD = 'gamon2025';
+  const COACH_EMAIL = 'gamonmatt@gmail.com';
+  const TOTAL_STEPS = 6;
+
+  let currentStep = 1;
+  let data = {
+    objectif: '', 'objectif-poids': '',
+    prenom: '', email: '', age: '', metier: '', poids: '', taille: '',
+    pas: '5000', sport: '', 'type-sport': '',
+    'repas-nb': '', 'mange-bcp': '', habitudes: '',
+    'aliment-plaisir': '', 'repas-plaisir': '',
+    allergies: [], 'allergies-autre': '',
+    motivation: '', attente: '', formule: ''
+  };
+
+  // ── RANGE UPDATE ──
+  function updateRange(id, valId, fmt) {
+    const v = parseInt(document.getElementById(id).value);
+    document.getElementById(valId).textContent = fmt(v);
+    data[id] = String(v);
+  }
+
+  // Init range
+  document.getElementById('pas').addEventListener('input', function() {
+    updateRange('pas', 'pas-val', v => v.toLocaleString('fr') + ' pas');
+  });
+
+  // ── SINGLE CHOICE ──
+  function selectChoice(key, value, btn) {
+    document.querySelectorAll(`#${key}-choices .choice-btn`).forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    data[key] = value;
+    clearError('f-' + key);
+  }
+
+  // ── MULTI CHOICE (allergies) ──
+  const allergiesSelected = new Set();
+
+  function toggleChoice(key, value, btn) {
+    if (value === 'Aucune') {
+      allergiesSelected.clear();
+      document.querySelectorAll(`#${key}-choices .choice-btn`).forEach(b => b.classList.remove('selected'));
+      allergiesSelected.add('Aucune');
+      btn.classList.add('selected');
+    } else {
+      const noneBtn = [...document.querySelectorAll(`#${key}-choices .choice-btn`)].find(b => b.textContent === 'Aucune');
+      if (noneBtn) noneBtn.classList.remove('selected');
+      allergiesSelected.delete('Aucune');
+
+      if (allergiesSelected.has(value)) {
+        allergiesSelected.delete(value);
+        btn.classList.remove('selected');
+      } else {
+        allergiesSelected.add(value);
+        btn.classList.add('selected');
+      }
+    }
+    data.allergies = [...allergiesSelected];
+    clearError('f-allergies');
+  }
+
+  // ── VALIDATION ──
+  function clearError(fieldId) {
+    const f = document.getElementById(fieldId);
+    if (f) f.classList.remove('has-error');
+  }
+
+  function showError(fieldId) {
+    const f = document.getElementById(fieldId);
+    if (f) f.classList.add('has-error');
+  }
+
+  function validateStep(step) {
+    let ok = true;
+
+    if (step === 1) {
+      if (!data.objectif) { showError('f-objectif'); ok = false; }
+    }
+
+    if (step === 2) {
+      const prenom = document.getElementById('prenom').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const age = document.getElementById('age').value.trim();
+      const metier = document.getElementById('metier').value.trim();
+      const poids = document.getElementById('poids').value.trim();
+      const taille = document.getElementById('taille').value.trim();
+
+      if (!prenom) { showError('f-prenom'); ok = false; } else { data.prenom = prenom; clearError('f-prenom'); }
+      if (!email || !email.includes('@')) { showError('f-email'); ok = false; } else { data.email = email; clearError('f-email'); }
+      if (!age) { showError('f-age'); ok = false; } else { data.age = age; clearError('f-age'); }
+      if (!metier) { showError('f-metier'); ok = false; } else { data.metier = metier; clearError('f-metier'); }
+      if (!poids) { showError('f-poids'); ok = false; } else { data.poids = poids; clearError('f-poids'); }
+      if (!taille) { showError('f-taille'); ok = false; } else { data.taille = taille; clearError('f-taille'); }
+    }
+
+    if (step === 3) {
+      data.pas = document.getElementById('pas').value;
+      data['type-sport'] = document.getElementById('type-sport').value.trim();
+      if (!data.sport) { showError('f-sport'); ok = false; }
+    }
+
+    if (step === 4) {
+      data.habitudes = document.getElementById('habitudes').value.trim();
+      if (!data['repas-nb']) { showError('f-repas-nb'); ok = false; }
+      if (!data['mange-bcp']) { showError('f-mange-bcp'); ok = false; }
+    }
+
+    if (step === 5) {
+      data['aliment-plaisir'] = document.getElementById('aliment-plaisir').value.trim();
+      data['repas-plaisir'] = document.getElementById('repas-plaisir').value.trim();
+      data['allergies-autre'] = document.getElementById('allergies-autre').value.trim();
+      if (!data['aliment-plaisir']) { showError('f-aliment-plaisir'); ok = false; }
+      if (!data['repas-plaisir']) { showError('f-repas-plaisir'); ok = false; }
+      if (data.allergies.length === 0) { showError('f-allergies'); ok = false; }
+    }
+
+    if (step === 6) {
+      data.motivation = document.getElementById('motivation').value.trim();
+      data.attente = document.getElementById('attente').value.trim();
+      data.formule = document.getElementById('formule').value;
+      data['objectif-poids'] = document.getElementById('objectif-poids').value.trim();
+      if (!data.formule) { showError('f-formule'); ok = false; }
+    }
+
+    return ok;
+  }
+
+  // ── NAVIGATION ──
+  function nextStep(from) {
+    if (!validateStep(from)) return;
+    goToStep(from + 1);
+  }
+
+  function prevStep(from) {
+    goToStep(from - 1);
+  }
+
+  function goToStep(n) {
+    document.getElementById('step-' + currentStep).classList.remove('active');
+    currentStep = n;
+
+    if (n > TOTAL_STEPS) {
+      submitForm();
+      return;
+    }
+
+    document.getElementById('step-' + n).classList.add('active');
+    updateProgress(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function updateProgress(n) {
+    const pct = (n / TOTAL_STEPS) * 100;
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('progressCount').textContent = `Étape ${n} / ${TOTAL_STEPS}`;
+  }
+
+  // ── SUBMIT ──
+  function submitForm() {
+    if (!validateStep(6)) return;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    document.getElementById('submitLabel').textContent = 'Envoi en cours...';
+
+    // Save to localStorage
+    const submissions = JSON.parse(localStorage.getItem('nutrition_submissions') || '[]');
+    const entry = { ...data, date: new Date().toLocaleString('fr-FR') };
+    submissions.unshift(entry);
+    localStorage.setItem('nutrition_submissions', JSON.stringify(submissions));
+
+    // Build email body
+    const body = buildEmailBody(entry);
+
+    // Send via mailto (fallback) — for production use EmailJS or a backend
+    const subject = encodeURIComponent(`Nouveau bilan nutrition — ${data.prenom}`);
+    const bodyEncoded = encodeURIComponent(body);
+
+    // Show success
+    setTimeout(() => {
+      document.getElementById('progressWrap').style.display = 'none';
+      for (let i = 1; i <= TOTAL_STEPS; i++) {
+        const s = document.getElementById('step-' + i);
+        if (s) s.style.display = 'none';
+      }
+      document.getElementById('success').style.display = 'block';
+
+      // Open mailto
+      window.location.href = `mailto:${COACH_EMAIL}?subject=${subject}&body=${bodyEncoded}`;
+    }, 600);
+  }
+
+  function buildEmailBody(d) {
+    return `NOUVEAU BILAN NUTRITION
+========================
+Date : ${d.date}
+
+── OBJECTIF ──
+Objectif principal : ${d.objectif}
+Objectif de poids : ${d['objectif-poids'] || 'Non renseigné'} kg
+Formule choisie : ${d.formule}
+
+── PROFIL ──
+Prénom : ${d.prenom}
+Email : ${d.email}
+Âge : ${d.age} ans
+Métier : ${d.metier}
+Poids actuel : ${d.poids} kg
+Taille : ${d.taille} cm
+
+── ACTIVITÉ ──
+Nombre de pas / jour : ${parseInt(d.pas).toLocaleString('fr')}
+Sport : ${d.sport}
+Type de sport : ${d['type-sport'] || 'Non renseigné'}
+
+── ALIMENTATION ──
+Nombre de repas / jour : ${d['repas-nb']}
+Tendance à beaucoup manger : ${d['mange-bcp']}
+Habitudes alimentaires : ${d.habitudes || 'Non renseigné'}
+
+── PLAISIRS & CONTRAINTES ──
+Aliments plaisir : ${d['aliment-plaisir']}
+Repas plaisir : ${d['repas-plaisir']}
+Allergies / intolérances : ${d.allergies.join(', ')}
+Précisions allergies : ${d['allergies-autre'] || 'Aucune'}
+
+── MOTIVATION ──
+Pourquoi maintenant : ${d.motivation || 'Non renseigné'}
+Attentes : ${d.attente || 'Non renseigné'}
+========================`;
+  }
+
+  // ── ADMIN ──
+  function openAdmin() {
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('admin-pwd').value = '';
+    document.getElementById('admin-error').textContent = '';
+    document.getElementById('admin-content').style.display = 'none';
+    document.getElementById('admin-login-wrap').style.display = 'block';
+  }
+
+  function closeAdmin() {
+    document.getElementById('admin-panel').style.display = 'none';
+  }
+
+  function checkAdmin() {
+    const pwd = document.getElementById('admin-pwd').value;
+    if (pwd === ADMIN_PASSWORD) {
+      document.getElementById('admin-login-wrap').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+      renderSubmissions();
+    } else {
+      document.getElementById('admin-error').textContent = 'Mot de passe incorrect.';
+    }
+  }
+
+  function renderSubmissions() {
+    const submissions = JSON.parse(localStorage.getItem('nutrition_submissions') || '[]');
+    const list = document.getElementById('submissions-list');
+
+    if (submissions.length === 0) {
+      list.innerHTML = '<div class="no-submissions">Aucune réponse reçue pour l\'instant.</div>';
+      return;
+    }
+
+    list.innerHTML = submissions.map((s, i) => `
+      <div class="submission-card">
+        <div class="sub-header" onclick="toggleSub(${i})">
+          <div class="sub-name">${s.prenom || 'Anonyme'} — ${s.objectif || ''}</div>
+          <div class="sub-date">${s.date}</div>
+        </div>
+        <div class="sub-body" id="sub-${i}">
+          ${renderSubField('Objectif', s.objectif)}
+          ${renderSubField('Objectif de poids', s['objectif-poids'] ? s['objectif-poids'] + ' kg' : '—')}
+          ${renderSubField('Formule', s.formule)}
+          ${renderSubField('Email', s.email)}
+          ${renderSubField('Âge', s.age + ' ans')}
+          ${renderSubField('Métier', s.metier)}
+          ${renderSubField('Poids / Taille', s.poids + ' kg / ' + s.taille + ' cm')}
+          ${renderSubField('Pas / jour', parseInt(s.pas).toLocaleString('fr'))}
+          ${renderSubField('Sport', s.sport)}
+          ${renderSubField('Type de sport', s['type-sport'] || '—')}
+          ${renderSubField('Repas / jour', s['repas-nb'])}
+          ${renderSubField('Mange beaucoup ?', s['mange-bcp'])}
+          ${renderSubField('Habitudes', s.habitudes || '—')}
+          ${renderSubField('Aliments plaisir', s['aliment-plaisir'])}
+          ${renderSubField('Repas plaisir', s['repas-plaisir'])}
+          ${renderSubField('Allergies', s.allergies ? s.allergies.join(', ') : '—')}
+          ${renderSubField('Motivation', s.motivation || '—')}
+          ${renderSubField('Attentes', s.attente || '—')}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderSubField(label, value) {
+    return `<div class="sub-field"><div class="sub-field-label">${label}</div><div class="sub-field-value">${value}</div></div>`;
+  }
+
+  function toggleSub(i) {
+    const body = document.getElementById('sub-' + i);
+    body.classList.toggle('open');
+  }
+</script>
+</body>
+</html>
